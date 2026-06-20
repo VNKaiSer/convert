@@ -1,0 +1,50 @@
+[
+  {
+    "data": {
+      "pcbRaw": "",
+      "internalFacilitiesRaw": "{{icoreRaw}}",
+      "declaredIncome": 2e7,
+      "productType": "REVI_CREDIT",
+      "productCode": "REVI_CREDIT_OCTO_APP"
+    },
+    "metadata": {
+      "callbackUrl": null,
+      "topic": null,
+      "requestId": "88000000145927",
+      "correlationId": "dd1816e1-2e81-4352-ad50-d57ab0ba1f80",
+      "body": null
+    }
+  },
+  {
+    "data": {
+      "pcbRaw": "{{pcbRaw}}",
+      "internalFacilitiesRaw": "",
+      "declaredIncome": 2e7,
+      "productType": "REVI_CREDIT",
+      "productCode": "REVI_CREDIT_OCTO_APP"
+    },
+    "metadata": {
+      "callbackUrl": null,
+      "topic": null,
+      "requestId": "88000000145927",
+      "correlationId": "dd1816e1-2e81-4352-ad50-d57ab0ba1f80",
+      "body": null
+    }
+  },
+  {
+    "data": {
+      "pcbRaw": "{{pcbRaw}}",
+      "internalFacilitiesRaw": "{{icoreRaw}}",
+      "declaredIncome": 2e7,
+      "productType": "REVI_CREDIT",
+      "productCode": "REVI_CREDIT_OCTO_APP"
+    },
+    "metadata": {
+      "callbackUrl": null,
+      "topic": null,
+      "requestId": "88000000145927",
+      "correlationId": "dd1816e1-2e81-4352-ad50-d57ab0ba1f80",
+      "body": null
+    }
+  }
+]

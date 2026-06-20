@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hướng dẫn API Compare</title>
+  <style>
+    :root {
+      --bg: #f8fafc;
+      --card: #ffffff;
+      --text: #0f172a;
+      --muted: #64748b;
+      --border: #e2e8f0;
+      --accent: #2563eb;
+      --code-bg: #f1f5f9;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0f172a;
+        --card: #1e293b;
+        --text: #f1f5f9;
+        --muted: #94a3b8;
+        --border: #334155;
+        --accent: #60a5fa;
+        --code-bg: #0f172a;
+      }
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+    }
+    .wrap {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 2rem 1.25rem 4rem;
+    }
+    header {
+      margin-bottom: 2rem;
+      padding-bottom: 1.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+    h1 { font-size: 1.75rem; margin: 0 0 0.5rem; }
+    .subtitle { color: var(--muted); margin: 0; }
+    h2 {
+      font-size: 1.25rem;
+      margin: 2rem 0 0.75rem;
+      padding-top: 0.5rem;
+      border-top: 1px solid var(--border);
+    }
+    h2:first-of-type { border-top: none; margin-top: 0; }
+    h3 { font-size: 1.05rem; margin: 1.25rem 0 0.5rem; }
+    h4 { font-size: 0.95rem; margin: 1rem 0 0.4rem; color: var(--muted); }
+    p { margin: 0.5rem 0; }
+    ul, ol { margin: 0.5rem 0; padding-left: 1.5rem; }
+    li { margin: 0.25rem 0; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+      margin: 0.75rem 0;
+    }
+    th, td {
+      border: 1px solid var(--border);
+      padding: 0.5rem 0.75rem;
+      text-align: left;
+      vertical-align: top;
+    }
+    th { background: var(--code-bg); font-weight: 600; }
+    code {
+      font-family: ui-monospace, "Cascadia Code", monospace;
+      font-size: 0.88em;
+      background: var(--code-bg);
+      padding: 0.1em 0.35em;
+      border-radius: 4px;
+    }
+    pre {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem;
+      overflow-x: auto;
+      font-size: 0.85rem;
+      line-height: 1.5;
+    }
+    pre code { background: none; padding: 0; }
+    blockquote {
+      margin: 0.75rem 0;
+      padding: 0.75rem 1rem;
+      border-left: 4px solid var(--accent);
+      background: var(--card);
+      border-radius: 0 8px 8px 0;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+    .flow {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      margin: 0.75rem 0;
+      font-size: 0.9rem;
+    }
+    .flow ol { margin: 0; }
+    .checklist { list-style: none; padding-left: 0; }
+    .checklist li::before { content: "☐ "; color: var(--accent); }
+    a { color: var(--accent); }
+    .back {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      margin-bottom: 1rem;
+      font-size: 0.9rem;
+      text-decoration: none;
+    }
+    .back:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <a class="back" href="/json-compare">← Quay lại JSON Compare</a>
+
+    <header>
+      <h1>Hướng dẫn sử dụng API Compare</h1>
+      <p class="subtitle">Tab <strong>API Compare</strong> trong công cụ JSON Compare (<code>/json-compare</code>)</p>
+    </header>
+
+    <h2>Mục đích</h2>
+    <p>API Compare giúp bạn:</p>
+    <ol>
+      <li>Gọi <strong>2 API</strong> (Endpoint 1 và Endpoint 2) với cùng cấu hình request</li>
+      <li>Lấy response, tự động gộp kết quả (khi chạy batch)</li>
+      <li><strong>So sánh (diff)</strong> JSON giữa hai phía và xem field nào khác</li>
+    </ol>
+    <p>Phù hợp khi regression test giữa 2 môi trường, 2 version API, hoặc so sánh output từ nhiều bản ghi input (vd. hàng trăm / hàng nghìn <code>pcbRaw</code>).</p>
+
+    <h2>Tổng quan giao diện</h2>
+    <table>
+      <thead>
+        <tr><th>Khối</th><th>Chức năng</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>TXT → JSON Converter</strong></td><td>Convert file TXT (JSONL) thành JSON array, load vào biến</td></tr>
+        <tr><td><strong>Variables</strong></td><td>Khai báo biến dùng trong URL / Headers / Body</td></tr>
+        <tr><td><strong>Endpoint 1 &amp; 2</strong></td><td>Cấu hình method, URL, headers, body cho 2 API</td></tr>
+        <tr><td><strong>Call Compare with Variable</strong></td><td>Chạy batch: loop theo array 1, inject 1–2 field body → gọi 2 API</td></tr>
+        <tr><td><strong>JSON 1 / JSON 2</strong></td><td>Hiển thị response đã gộp (pretty-print)</td></tr>
+        <tr><td><strong>Compare options</strong></td><td>Tuỳ chọn quy tắc so sánh</td></tr>
+        <tr><td><strong>Differences</strong></td><td>Bảng diff (Flat) hoặc cây (Tree)</td></tr>
+      </tbody>
+    </table>
+    <blockquote>
+      <strong>Lưu ý:</strong> Tab <strong>Manual Compare</strong> và <strong>API Compare</strong> dùng <strong>workspace riêng</strong>. Gọi API chỉ cập nhật JSON ở tab API, không ảnh hưởng tab Manual.
+    </blockquote>
+
+    <h2>Quy trình chuẩn (ví dụ <code>pcbRaws</code> + <code>icores</code>)</h2>
+    <div class="flow">
+      <ol>
+        <li>Upload TXT (JSONL) → Convert → <code>converted/*.json</code></li>
+        <li>Load vào biến <code>pcbRaws</code>, <code>icores</code></li>
+        <li>Cấu hình Endpoint 1 &amp; 2 — body dùng <code>{{pcbRaw}}</code>, <code>{{icoreRaw}}</code></li>
+        <li>Chọn Array 1 + Body field 1 (và Array 2 nếu cần)</li>
+        <li><strong>Call Compare with Variable</strong></li>
+        <li>Gộp response → JSON 1 / JSON 2 → Auto compare → Differences</li>
+      </ol>
+    </div>
+
+    <h3>Bước 1 — Chuẩn bị dữ liệu input</h3>
+    <ol>
+      <li>Vào tab <strong>API Compare</strong></li>
+      <li>Ở <strong>Variables</strong>, thêm biến array (vd. <code>pcbRaws</code>, <code>icores</code>)</li>
+      <li>Ở <strong>TXT → JSON Converter</strong>: Upload TXT (mỗi dòng = 1 JSON object) → file lưu vào <code>converted/</code> (vd. <code>pcb.json</code>, <code>icore.json</code>)</li>
+      <li>Với <strong>mỗi</strong> file convert: chọn <strong>Converted file</strong> → <strong>Variable key</strong> tương ứng → <strong>Load to variable</strong></li>
+    </ol>
+    <p>Mỗi biến có dạng JSON array: <code>[{...}, {...}, ...]</code>.</p>
+    <p><strong>Gợi ý đặt tên:</strong> array số nhiều (<code>pcbRaws</code>, <code>icores</code>) → field body số ít (<code>pcbRaw</code>, <code>icoreRaw</code>). Tool tự gợi ý body field khi tên array kết thúc bằng <code>s</code>.</p>
+
+    <h3>Bước 2 — Cấu hình Endpoint</h3>
+    <table>
+      <thead><tr><th>Trường</th><th>Mô tả</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Method</strong></td><td>GET, POST, PUT, PATCH, DELETE</td></tr>
+        <tr><td><strong>URL</strong></td><td>URL đầy đủ, hỗ trợ <code>{{tên_biến}}</code></td></tr>
+        <tr><td><strong>Headers (JSON)</strong></td><td>Object JSON, hỗ trợ biến</td></tr>
+        <tr><td><strong>Body (JSON)</strong></td><td>Chỉ hiện với POST / PUT / PATCH</td></tr>
+      </tbody>
+    </table>
+    <p><strong>Body gợi ý (1 field):</strong></p>
+    <pre><code>{
+  "pcbRaw": "{{pcbRaw}}"
+}</code></pre>
+    <p><strong>Body gợi ý (2 field — dùng cùng lúc <code>pcbRaws</code> + <code>icores</code>):</strong></p>
+    <pre><code>{
+  "data": {
+    "pcbRaw": "{{pcbRaw}}",
+    "internalFacilitiesRaw": "{{icoreRaw}}",
+    "declaredIncome": 20000000,
+    "productType": "REVI_CREDIT",
+    "productCode": "REVI_CREDIT_OCTO_APP"
+  }
+}</code></pre>
+    <ul>
+      <li>Mỗi <code>{{tên_biến}}</code> được thay bằng <strong>chuỗi JSON</strong> (string) khi gửi request</li>
+      <li>Giá trị inject luôn được escape đúng chuẩn JSON string</li>
+      <li>Nếu body/URL có <code>{{...}}</code>, dưới ô nhập hiện <strong>Resolved preview</strong></li>
+    </ul>
+
+    <h3>Bước 3 — Gọi API và so sánh</h3>
+    <h4>A. Call Both &amp; Compare</h4>
+    <ul>
+      <li>Gọi <strong>1 lần</strong> Endpoint 1 và Endpoint 2 với biến hiện tại</li>
+      <li>Nếu có biến array, tool tự loop theo ưu tiên: <code>jsArray</code> → <code>pcbRaw</code> → biến trong body</li>
+    </ul>
+    <h4>B. Call Compare with Variable (khuyến nghị batch)</h4>
+    <p>Mỗi <strong>hàng mapping</strong> gồm <strong>Array</strong> + <strong>Body field</strong>. Bấm <strong>+ Thêm cặp array → body field</strong> để thêm hàng (không giới hạn cứng 2 hàng). Hàng đầu tiên quyết định vòng lặp.</p>
+    <table>
+      <thead>
+        <tr><th>Hàng</th><th>Bắt buộc</th><th>Vai trò</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Hàng 1 — Array (vòng lặp) + Body field</strong></td><td>Có</td><td>Biến array quyết định <strong>số lần gọi API</strong>; inject <code>array[i]</code> vào body field</td></tr>
+        <tr><td><strong>Hàng 2, 3, …</strong></td><td>Tùy chọn</td><td>Inject array khác cùng index <code>i</code> nếu còn phần tử</td></tr>
+      </tbody>
+    </table>
+    <p><strong>Cách chọn nhanh:</strong></p>
+    <ol>
+      <li>Thêm ít nhất 1 biến array trong <strong>Variables</strong> (value bắt đầu bằng <code>[</code>)</li>
+      <li>Tool <strong>tự gợi ý</strong> Array 1 = array đầu tiên, Array 2 = array thứ hai (nếu có)</li>
+      <li>Body field gợi ý: <code>pcbRaws</code> → <code>pcbRaw</code>, <code>icores</code> → <code>icore</code> (bỏ <code>s</code> cuối)</li>
+      <li>Kiểm tra / chỉnh dropdown nếu tên biến khác convention</li>
+      <li>Bấm <strong>Call Compare with Variable</strong></li>
+    </ol>
+    <p><strong>Logic vòng lặp:</strong></p>
+    <ul>
+      <li>Số lần gọi = <strong>độ dài Array 1</strong> (không phụ thuộc Array 2)</li>
+      <li>Mỗi index <code>i</code>: luôn inject <code>array1[i]</code> → Body field 1</li>
+      <li>Nếu có Array 2 và <code>i &lt; độ_dài_array2</code> → inject <code>array2[i]</code> → Body field 2</li>
+      <li>Nếu <code>i</code> vượt độ dài Array 2 → <strong>bỏ qua</strong> inject array 2 (không báo lỗi)</li>
+      <li>Chỉ batch <strong>cả 2 API thành công</strong> mới đưa vào JSON gộp</li>
+    </ul>
+    <p><strong>Ví dụ:</strong> <code>pcbRaws</code> (213), <code>icores</code> (124), Array 1 = <code>pcbRaws</code>:</p>
+    <table>
+      <thead><tr><th>Index <code>i</code></th><th>Inject</th></tr></thead>
+      <tbody>
+        <tr><td><code>0</code> … <code>123</code></td><td><code>pcbRaws[i]</code> → <code>pcbRaw</code> <strong>và</strong> <code>icores[i]</code> → <code>icoreRaw</code></td></tr>
+        <tr><td><code>124</code> … <code>212</code></td><td>Chỉ <code>pcbRaws[i]</code> → <code>pcbRaw</code></td></tr>
+      </tbody>
+    </table>
+    <p>Ngược lại, Array 1 = <code>icores</code> (124) → chạy <strong>124 lần</strong>, dùng <code>pcbRaws[0..123]</code> khi Array 2 = <code>pcbRaws</code>.</p>
+    <p><strong>Chỉ 1 array:</strong> giữ 1 hàng mapping. Xoá hàng thừa bằng nút thùng rác. Sau khi chạy xong, tool tự compare.</p>
+
+    <h2>Biến (Variables)</h2>
+    <p>Cú pháp Postman: <code>{{tên_biến}}</code> trong URL, Headers, Body.</p>
+    <table>
+      <thead><tr><th>Loại</th><th>Ví dụ</th><th>Ghi chú</th></tr></thead>
+      <tbody>
+        <tr><td>Chuỗi thường</td><td><code>abc</code></td><td>Dùng trực tiếp</td></tr>
+        <tr><td>Chuỗi JSON</td><td><code>"hello"</code></td><td>Tự unwrap thành <code>hello</code></td></tr>
+        <tr><td>Object / Array</td><td><code>{"a":1}</code> hoặc <code>[{...}]</code></td><td>Lưu dạng JSON</td></tr>
+      </tbody>
+    </table>
+    <p><strong>Import / Export:</strong> Import file <code>{ "key": "value" }</code>, Export <code>variables.json</code>. Cấu hình variables, endpoints, arrayCompare <strong>lưu tự động</strong> trên browser.</p>
+
+    <h2>Xử lý response API</h2>
+    <ol>
+      <li>Parse JSON response</li>
+      <li>Nếu có key <code>data</code> ở root → chỉ lấy <code>data</code> (pretty-print)</li>
+      <li>Nếu không → lấy toàn bộ response</li>
+    </ol>
+    <p>Batch thành công được <strong>gộp thành JSON array</strong> ở JSON 1 / JSON 2.</p>
+
+    <h2>Xem kết quả so sánh</h2>
+    <h3>Flat</h3>
+    <p>Bảng Type, Path, JSON 1, JSON 2 — filter, sort, phân trang 100 dòng/trang.</p>
+    <h3>Tree</h3>
+    <pre><code>[7]  $[7]
+  loans  $[7].loans
+    [0]  $[7].loans[0]
+      outstanding  $[7].loans[0].outstanding</code></pre>
+    <p>Mỗi leaf: tên field, full path, loại lỗi, giá trị JSON 1 &amp; JSON 2.</p>
+    <h3>Click diff</h3>
+    <ul>
+      <li>Scroll + highlight dòng trong JSON 1 / JSON 2</li>
+      <li>Header editor hiện loại lỗi</li>
+    </ul>
+    <h3>Export</h3>
+    <ul>
+      <li><strong>Copy</strong>: copy diff dạng JSON</li>
+      <li><strong>Download CSV</strong>: tải <code>json-diff.csv</code></li>
+    </ul>
+
+    <h2>Tuỳ chọn so sánh</h2>
+    <table>
+      <thead><tr><th>Option</th><th>Ý nghĩa</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Slice Equals</strong></td><td>So sánh số sau khi cắt phần thập phân</td></tr>
+        <tr><td><strong>Number equal</strong></td><td><code>1</code> và <code>1.0</code> bằng nhau</td></tr>
+        <tr><td><strong>Trim string</strong></td><td>Bỏ khoảng trắng đầu/cuối chuỗi</td></tr>
+        <tr><td><strong>Missing = null</strong></td><td>Field thiếu và <code>null</code> bằng nhau</td></tr>
+        <tr><td><strong>String/Num equal</strong></td><td><code>"123"</code> và <code>123</code> bằng nhau</td></tr>
+        <tr><td><strong>Key Ignore Case</strong></td><td>Tên key không phân biệt hoa thường</td></tr>
+      </tbody>
+    </table>
+    <blockquote>Array so theo <strong>index</strong> (<code>[0]</code>, <code>[1]</code>, …).</blockquote>
+
+    <h2>Batch thất bại</h2>
+    <ul>
+      <li>Batch lỗi <strong>không</strong> đưa vào JSON gộp</li>
+      <li>Panel <strong>Failed batches</strong> + file <code>failed/batch-failures.json</code></li>
+      <li>Chi tiết: batch index, EP1/EP2, status, message, snippet response</li>
+    </ul>
+
+    <h2>Mẹo &amp; lỗi thường gặp</h2>
+    <h3>Không thấy biến trong dropdown Array</h3>
+    <p>Value phải là JSON array hợp lệ, bắt đầu bằng <code>[</code>.</p>
+    <h3>Call Compare with Variable bị disable</h3>
+    <ul>
+      <li>Chọn đủ <strong>Array 1</strong> và <strong>Body field 1</strong></li>
+      <li>Array 1 phải là biến array hợp lệ trong <strong>Variables</strong></li>
+      <li>Nếu chọn Array 2 thì phải chọn thêm <strong>Body field 2</strong></li>
+      <li>Body Endpoint 1 nên có <code>{{tên_field}}</code> tương ứng</li>
+    </ul>
+    <h3>Hai array khác độ dài</h3>
+    <ul>
+      <li><strong>Không lỗi</strong> — vòng lặp luôn theo Array 1</li>
+      <li>Array 2 chỉ inject khi index <code>i</code> còn trong phạm vi</li>
+    </ul>
+    <h3>Response rỗng</h3>
+    <p>Kiểm tra preview, Failed batches, API trả JSON hợp lệ.</p>
+    <h3>JSON quá lớn</h3>
+    <p>Lite mode &gt; 400 dòng; diff có phân trang.</p>
+
+    <h2>Checklist nhanh</h2>
+    <h3>Một array (<code>pcbRaws</code> only)</h3>
+    <ul class="checklist">
+      <li>Thêm biến <code>pcbRaws</code></li>
+      <li>Upload TXT → Convert → Load vào <code>pcbRaws</code></li>
+      <li>Cấu hình Endpoint 1 &amp; 2 (body có <code>{{pcbRaw}}</code>)</li>
+      <li>Array 1 = <code>pcbRaws</code>, Body field 1 = <code>pcbRaw</code>, Array 2 = <code>None</code></li>
+      <li>Call Compare with Variable</li>
+    </ul>
+    <h3>Hai array (<code>pcbRaws</code> + <code>icores</code>)</h3>
+    <ul class="checklist">
+      <li>Thêm biến <code>pcbRaws</code> và <code>icores</code></li>
+      <li>Convert &amp; load từng file TXT vào đúng biến</li>
+      <li>Body có <code>{{pcbRaw}}</code> và <code>{{icoreRaw}}</code></li>
+      <li>Array 1 = <code>pcbRaws</code>, Body field 1 = <code>pcbRaw</code></li>
+      <li>Array 2 = <code>icores</code>, Body field 2 = <code>icoreRaw</code></li>
+      <li>Call Compare with Variable</li>
+      <li>Xem Tree diff, click từng dòng, Export CSV nếu cần</li>
+    </ul>
+
+    <h2>Lưu trữ (CSR — chạy trên browser)</h2>
+    <table>
+      <thead><tr><th>Thành phần</th><th>Mô tả</th></tr></thead>
+      <tbody>
+        <tr><td>Gọi API</td><td><code>fetch</code> trực tiếp từ browser (cần API hỗ trợ CORS)</td></tr>
+        <tr><td>Settings / failures</td><td><code>localStorage</code></td></tr>
+        <tr><td><code>arrayCompare</code></td><td>Cấu hình Array 1/2 + Body field 1/2</td></tr>
+        <tr><td>Converted TXT → JSON</td><td><code>IndexedDB</code> + <code>converted/</code> trên disk</td></tr>
+        <tr><td>Response tạm</td><td>Bộ nhớ trong phiên làm việc</td></tr>
+        <tr><td><code>failed/batch-failures.json</code></td><td>Log batch lỗi</td></tr>
+      </tbody>
+    </table>
+    <p><strong>Cấu hình <code>arrayCompare</code> lưu trên browser:</strong></p>
+    <pre><code>{
+  "mappings": [
+    { "sourceVariable": "pcbRaws", "injectVariable": "pcbRaw" },
+    { "sourceVariable": "icores", "injectVariable": "icoreRaw" }
+  ]
+}</code></pre>
+    <ul>
+      <li><code>mappings[0]</code>: cặp chính (vòng lặp)</li>
+      <li><code>mappings[1+]</code>: các cặp bổ sung (cùng index, tuỳ chọn)</li>
+    </ul>
+  </div>
+</body>
+</html>
